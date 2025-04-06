@@ -1,7 +1,6 @@
 (function(){
     const eneyida = {};
 
-    // Використовуємо fetch, сумісний з web і Android
     eneyida.search = function(query, call) {
         const searchUrl = `https://eneyida.tv/index.php?do=search&subaction=search&story=${encodeURIComponent(query)}`;
 
@@ -38,7 +37,7 @@
         fetch(item.url)
             .then(response => response.text())
             .then(html => {
-                const match = html.match(/<iframe[^>]+src=["']([^"']+)["']/);
+                const match = html.match(/<iframe[^>]+src=[\"']([^\"']+)[\"']/);
                 if (match && match[1]) {
                     call([{
                         file: match[1],
