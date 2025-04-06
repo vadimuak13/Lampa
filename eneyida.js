@@ -1,64 +1,58 @@
-(function(){
-    const eneyida = {};
+// ==UserScript==
+// @name         Eneyida Plugin for Lampa
+// @description  Онлайн-провайдер для перегляду фільмів з eneyida.tv у Lampa
+// ==/UserScript==
 
-    eneyida.search = function(query, call) {
-        const searchUrl = `https://eneyida.tv/index.php?do=search&subaction=search&story=${encodeURIComponent(query)}`;
+(function () {
+    window.plugin = function(plugin) {
+        plugin.register("eneyida", {
+            type: "video",
+            name: "Eneyida",
+            synopsis: "Провайдер з сайту eneyida.tv",
+            version: "1.0.0",
 
-        fetch(searchUrl)
-            .then(response => response.text())
-            .then(html => {
-                const results = [];
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const items = doc.querySelectorAll('div.shortstory');
+            search: async function (query, movie, callback) {
+                try {
+                    let title = query.search;
+                    let year = movie.original_language === 'uk' ? movie.release_date?.split('-')[0] : '';
+                    let url = `https://eneyida.tv/index.php?do=search&subaction=search&story=${encodeURIComponent(title)}`;
 
-                items.forEach(item => {
-                    const a = item.querySelector('a.short');
-                    const img = item.querySelector('img');
-                    const title = item.querySelector('.short-title');
+                    let html = await fetch(url).then(r => r.text());
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(html, "text/html");
 
-                    if (a && img && title) {
-                        results.push({
-                            title: title.textContent.trim(),
-                            url: a.href,
-                            quality: 'HD',
-                            info: '🇺🇦 Eneyida',
-                            poster: img.src.startsWith('http') ? img.src : 'https://eneyida.tv' + img.src
-                        });
-                    }
-                });
+                    let items = [...doc.querySelectorAll('.shortstory')];
 
-                call(results);
-            })
-            .catch(() => call([]));
-    };
+                    let results = items.map(item => {
+                        let link = item.querySelector(".short-title a")?.href;
+                        let name = item.querySelector(".short-title a")?.textContent?.trim();
+                        let quality = 'HD';
 
-    eneyida.play = function(item, call) {
-        fetch(item.url)
-            .then(response => response.text())
-            .then(html => {
-                const match = html.match(/<iframe[^>]+src=[\"']([^\"']+)[\"']/);
-                if (match && match[1]) {
-                    call([{
-                        file: match[1],
-                        quality: 'HD',
-                        label: 'Eneyida',
-                        type: 'video'
-                    }]);
-                } else {
-                    call([]);
+                        if (link) {
+                            return {
+                                title: name,
+                                file: link,
+                                quality: quality,
+                                info: 'Eneyida',
+                                url: link,
+                                timeline: false,
+                            }
+                        }
+                    }).filter(Boolean);
+
+                    callback(results);
+                } catch (e) {
+                    console.error("Eneyida Plugin Error:", e);
+                    callback([]);
                 }
-            })
-            .catch(() => call([]));
-    };
+            },
 
-    if (typeof Lampa !== 'undefined' && Lampa.Platform && Lampa.Platform.addProvider) {
-        Lampa.Platform.addProvider({
-            name: 'eneyida',
-            version: '2.0',
-            type: 'video',
-            search: eneyida.search,
-            play: eneyida.play
+            play: function (element, settings, callback) {
+                callback({
+                    player: 'iframe',
+                    url: element.file
+                });
+            }
         });
     }
 })();
