@@ -1,4 +1,3 @@
-
 (function(){
     let eneyida = {};
 
@@ -6,14 +5,14 @@
         let url = `https://eneyida.tv/index.php?do=search&subaction=search&story=${encodeURIComponent(query)}`;
         network.silent(url, function(html){
             let results = [];
-            let matches = html.matchAll(/<a class="short" href="(.*?)"[^>]*>\s*<img src="(.*?)"[^>]*>\s*<div class="short-title">([^<]*)<\/div>/g);
+            let matches = html.matchAll(/<a class="short" href="(.*?)"[^>]*>\\s*<img src="(.*?)"[^>]*>\\s*<div class="short-title">([^<]*)<\\/div>/g);
             for (let match of matches) {
                 results.push({
                     title: match[3],
-                    url: match[1].startsWith('http') ? match[1] : 'https://eneyida.tv' + match[1],
+                    url: 'https://eneyida.tv' + match[1],
                     quality: 'HD',
                     info: '🇺🇦 озвучка',
-                    poster: match[2].startsWith('http') ? match[2] : 'https://eneyida.tv' + match[2]
+                    poster: 'https://eneyida.tv' + match[2]
                 });
             }
             call(results);
